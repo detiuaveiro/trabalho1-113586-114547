@@ -434,22 +434,22 @@ void ImageThreshold(Image img, uint8 thr) { ///
 void ImageBrighten(Image img, double factor) { ///
   assert(img != NULL);
 
-    // Iterate through the pixels of the image
-    for (int i = 0; i < img->width * img->height; ++i) {
-        // Get the current pixel level
-        uint8 currentLevel = img->pixel[i];
+  // Iterate through the pixels of the image
+  for (int i = 0; i < img->width * img->height; ++i) {
+    // Get the current pixel level
+    uint8 currentLevel = img->pixel[i];
 
-        // Calculate the new pixel level after applying brightness factor
-        uint8 newLevel = (uint8)(currentLevel * factor);
+    // Calculate the new pixel level after applying brightness factor
+    uint8 newLevel = (uint8)(currentLevel * factor + 0.5);
 
-        // Check if the new level exceeds the maximum pixel value
-        if (newLevel > PixMax) {
-            newLevel = PixMax; // Saturate to the maximum pixel value
-        }
-
-        // Set the new pixel level
-        img->pixel[i] = newLevel;
+    // Check if the new level exceeds the maximum pixel value
+    if (newLevel > PixMax) {
+        newLevel = PixMax; // Saturate to the maximum pixel value
     }
+
+    // Set the new pixel level
+    img->pixel[i] = newLevel;
+  }
 }
 
 
@@ -604,7 +604,7 @@ void ImageBlend(Image img1, int x, int y, Image img2, double alpha) { ///
     for (int cx = 0; cx < img2->width; ++cx) {
       // Calculate the blended pixel value using alpha
       uint8 blendedValue = (uint8)((1.0 - alpha) * ImageGetPixel(img1, x + cx, y + cy) +
-                                   alpha * ImageGetPixel(img2, cx, cy));
+                                   alpha * ImageGetPixel(img2, cx, cy) + 0.5);
 
       // Set the blended pixel value in the larger image
       ImageSetPixel(img1, x + cx, y + cy, blendedValue);
@@ -697,7 +697,7 @@ void ImageBlur(Image img, int dx, int dy) {
       }
 
       // Calculate the mean value and set the blurred pixel in the temporary image
-      uint8 meanValue = (count > 0) ? (uint8)(sum / count) : 0;
+      uint8 meanValue = (count > 0) ? (uint8)(sum / count) + 0.5 : 0;
       ImageSetPixel(blurredImg, x, y, meanValue);
     }
   }
