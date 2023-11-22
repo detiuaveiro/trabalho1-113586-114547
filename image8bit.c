@@ -697,7 +697,7 @@ void ImageBlur(Image img, int dx, int dy) {
       }
 
       // Calculate the mean value and set the blurred pixel in the temporary image
-      uint8 meanValue = (count > 0) ? (uint8)(sum / count) + 0.5 : 0;
+      uint8 meanValue = (count > 0) ? (uint8)((2*sum + count) / 2*count) : 0;
       ImageSetPixel(blurredImg, x, y, meanValue);
     }
   }
