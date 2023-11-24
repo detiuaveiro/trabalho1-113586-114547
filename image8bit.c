@@ -689,6 +689,8 @@ void ImageBlur(Image img, int dx, int dy) {
 
   InstrReset();
 
+  InstrPrint();
+
   // Create a temporary image to store the blurred result
   Image blurredImg = ImageCreate(img->width, img->height, img->maxval);
 
@@ -703,36 +705,34 @@ void ImageBlur(Image img, int dx, int dy) {
     for (int x = 0; x < img->width; ++x) {
       int sum = 0;
       int count = 0;
-
       // Iterate through the pixels in the neighborhood to calculate the mean
       for (int cy = y - dy; cy <= y + dy; ++cy) {
         for (int cx = x - dx; cx <= x + dx; ++cx) {
           // Check if the current neighbor pixel is within the image bounds
           if (ImageValidPos(img, cx, cy)) {
-            InstrCount[0] += 1;
+            InstrCount[1] += 1;
             // Accumulate pixel values and count valid pixels
             sum += ImageGetPixel(img, cx, cy);
             count++;
           }
         }
       }
-      InstrCount[0] += 1;
       // Calculate the mean value and set the blurred pixel in the temporary image
       uint8 meanValue = (count > 0) ? (uint8)((2*sum + count) / 2*count) : 0;
       ImageSetPixel(blurredImg, x, y, meanValue);
     }
   }
 
+  InstrPrint();
+
   // Copy the blurred result back to the original image
   for (int y = 0; y < img->height; ++y) {
     for (int x = 0; x < img->width; ++x) {
-      InstrCount[0] += 1;
+      // InstrCount[1] += 1;
       ImageSetPixel(img, x, y, ImageGetPixel(blurredImg, x, y));
     }
   }
 
   // Destroy the temporary image
   ImageDestroy(&blurredImg);
-
-  InstrPrint();
 }
