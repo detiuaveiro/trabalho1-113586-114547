@@ -682,6 +682,7 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
 /// The image is changed in-place.
 void ImageBlur(Image img, int dx, int dy) {
   assert(img != NULL);
+  assert(dx >= 0 && dy >= 0);
 
   InstrName[0] = "memops";
   InstrName[1] = "adds";
@@ -691,7 +692,7 @@ void ImageBlur(Image img, int dx, int dy) {
 
   InstrPrint();
 
-  // Create a temporary image to store the blurred result
+  // Create a copy of the image
   Image blurredImg = ImageCreate(img->width, img->height, img->maxval);
 
   // Check if image creation was successful
@@ -701,13 +702,13 @@ void ImageBlur(Image img, int dx, int dy) {
   }
 
   // Iterate through the pixels of the original image to apply the blur
-  for (int y = 0; y < img->height; ++y) {
-    for (int x = 0; x < img->width; ++x) {
-      int sum = 0;
-      int count = 0;
+  for (int y = 0; y < img->height; y++) {
+    for (int x = 0; x < img->width; x++) {
+      double sum = 0;
+      double count = 0;
       // Iterate through the pixels in the neighborhood to calculate the mean
-      for (int cy = y - dy; cy <= y + dy; ++cy) {
-        for (int cx = x - dx; cx <= x + dx; ++cx) {
+      for (int cy = y - dy; cy <= y + dy; cy++) {
+        for (int cx = x - dx; cx <= x + dx; cx++) {
           // Check if the current neighbor pixel is within the image bounds
           if (ImageValidPos(img, cx, cy)) {
             InstrCount[1] += 1;
@@ -718,7 +719,7 @@ void ImageBlur(Image img, int dx, int dy) {
         }
       }
       // Calculate the mean value and set the blurred pixel in the temporary image
-      uint8 meanValue = (count > 0) ? (uint8)((2*sum + count) / 2*count) : 0;
+      uint8 meanValue = (count > 0) ? (uint8)((sum / count) + 0.5) : 0;
       ImageSetPixel(blurredImg, x, y, meanValue);
     }
   }
@@ -726,13 +727,8 @@ void ImageBlur(Image img, int dx, int dy) {
   InstrPrint();
 
   // Copy the blurred result back to the original image
-  for (int y = 0; y < img->height; ++y) {
-    for (int x = 0; x < img->width; ++x) {
-      // InstrCount[1] += 1;
-      ImageSetPixel(img, x, y, ImageGetPixel(blurredImg, x, y));
-    }
-  }
-
+  memcpy(img->pixel, blurredImg->pixel, img->width * img->height * sizeof(uint8));
+  
   // Destroy the temporary image
   ImageDestroy(&blurredImg);
 }
