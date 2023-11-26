@@ -679,8 +679,9 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
 /// Each pixel is substituted by the mean of the pixels in the rectangle
 /// [x-dx, x+dx]x[y-dy, y+dy].
 /// The image is changed in-place.
-/*
-  void ImageBlur(Image img, int dx, int dy) {
+
+/* Original implementation
+void ImageBlur(Image img, int dx, int dy) {
   assert(img != NULL);
   assert(dx >= 0 && dy >= 0);
 
@@ -730,6 +731,8 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
   ImageDestroy(&blurredImg);
 }
 */
+
+// Optimized implementation
 void ImageBlur(Image img, int dx, int dy) {
   assert(img != NULL);
   assert(dx >= 0 && dy >= 0);
@@ -755,6 +758,7 @@ void ImageBlur(Image img, int dx, int dy) {
   // Sum table para integral image
   int **integralImage = (int **)malloc(nWidth * sizeof(int *));
 
+  // Check if memory was allocated
   if (integralImage == NULL) {
     perror("Erro na alocacao de memoria");
     exit(1);
@@ -768,27 +772,29 @@ void ImageBlur(Image img, int dx, int dy) {
     }
   }
 
+  // Calculate the area of the rectangle
   double area = (2 * dx + 1) * (2 * dy + 1);
 
   // Calculate the summed area table of the rectangle
   for (y = 0; y < nHeight; y++) {
     for (x = 0; x < nWidth; x++) {
-      if (x - dx < 0) {               // x está na margem esquerda
+      if (x - dx < 0) {               // x is in the left margin
         nx = 0;
-      } else if (x - dx >= width) {   // x está na margem direita
+      } else if (x - dx >= width) {   // x is in the right margin
         nx = width - 1;
       } else {
         nx = x - dx;
       }
 
-      if (y - dy < 0) {               // y está na margem superior
+      if (y - dy < 0) {               // y is in the upper margin
         ny = 0;
-      } else if (y - dy >= height) {  // y está na margem inferior
+      } else if (y - dy >= height) {  // y is in the lower margin
         ny = height - 1;
       } else {
         ny = y - dy;
       }
 
+      // Get the pixel value
       pixelVal = ImageGetPixel(img, nx, ny);
 
       if (x > 0) {
@@ -801,6 +807,7 @@ void ImageBlur(Image img, int dx, int dy) {
         pixelVal -= integralImage[x - 1][y - 1];
       }
 
+      // Set the pixel value
       integralImage[x][y] = pixelVal;
     }
   }
@@ -835,5 +842,4 @@ void ImageBlur(Image img, int dx, int dy) {
   }
   free(integralImage);
   integralImage = NULL;
-
 }
