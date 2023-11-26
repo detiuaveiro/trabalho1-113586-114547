@@ -11,9 +11,8 @@
 
 // Student authors (fill in below):
 // NMec:  Name:
-// 
-// 
-// 
+// 113586 Tiago Lopes
+// 114547 João Monteiro
 // Date:
 //
 
@@ -644,7 +643,7 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
   assert (img2 != NULL);
 
   InstrName[0] = "memops";
-  InstrName[1] = "adds";
+  InstrName[1] = "comps";
   InstrCalibrate();  // Call once, to measure CTU
 
   InstrReset();
@@ -685,12 +684,9 @@ void ImageBlur(Image img, int dx, int dy) {
   assert(dx >= 0 && dy >= 0);
 
   InstrName[0] = "memops";
-  InstrName[1] = "adds";
+  InstrName[1] = "comps";
   InstrCalibrate();  // Call once, to measure CTU
-
   InstrReset();
-
-  InstrPrint();
 
   // Create a copy of the image
   Image blurredImg = ImageCreate(img->width, img->height, img->maxval);
