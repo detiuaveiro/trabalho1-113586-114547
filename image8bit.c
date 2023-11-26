@@ -679,7 +679,8 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
 /// Each pixel is substituted by the mean of the pixels in the rectangle
 /// [x-dx, x+dx]x[y-dy, y+dy].
 /// The image is changed in-place.
-void ImageBlur(Image img, int dx, int dy) {
+/*
+  void ImageBlur(Image img, int dx, int dy) {
   assert(img != NULL);
   assert(dx >= 0 && dy >= 0);
 
@@ -727,4 +728,112 @@ void ImageBlur(Image img, int dx, int dy) {
   
   // Destroy the temporary image
   ImageDestroy(&blurredImg);
+}
+*/
+void ImageBlur(Image img, int dx, int dy) {
+  assert(img != NULL);
+  assert(dx >= 0 && dy >= 0);
+
+  InstrName[0] = "memops";
+  InstrName[1] = "comps";
+  InstrCalibrate();  // Call once, to measure CTU
+  InstrReset();
+
+  int height = img->height;
+  int width = img->width;
+  int nx, ny;
+  int x, y;
+  int pixelVal;
+  int A, B, C, D, sum;
+
+  int rectHeight = 2 * dy;
+  int rectWidth = 2 * dx;
+
+  int nHeight = height + 2 * dy;
+  int nWidth = width + 2 * dx;
+
+  // Sum table para integral image
+  int **integralImage = (int **)malloc(nWidth * sizeof(int *));
+
+  if (integralImage == NULL) {
+    perror("Erro na alocacao de memoria");
+    exit(1);
+  }
+
+  for (int i = 0; i < nWidth; ++i) {
+    integralImage[i] = (int *)malloc(nHeight * sizeof(int));
+    if (integralImage[i] == NULL) {
+      perror("Erro na alocacao de memoria");
+      exit(1);
+    }
+  }
+
+  double area = (2 * dx + 1) * (2 * dy + 1);
+
+  // Calculate the summed area table of the rectangle
+  for (y = 0; y < nHeight; y++) {
+    for (x = 0; x < nWidth; x++) {
+      if (x - dx < 0) {               // x está na margem esquerda
+        nx = 0;
+      } else if (x - dx >= width) {   // x está na margem direita
+        nx = width - 1;
+      } else {
+        nx = x - dx;
+      }
+
+      if (y - dy < 0) {               // y está na margem superior
+        ny = 0;
+      } else if (y - dy >= height) {  // y está na margem inferior
+        ny = height - 1;
+      } else {
+        ny = y - dy;
+      }
+
+      pixelVal = ImageGetPixel(img, nx, ny);
+
+      if (x > 0) {
+        pixelVal += integralImage[x - 1][y];
+      }
+      if (y > 0) {
+        pixelVal += integralImage[x][y - 1];
+      }
+      if (x > 0 && y > 0) {
+        pixelVal -= integralImage[x - 1][y - 1];
+      }
+
+      integralImage[x][y] = pixelVal;
+    }
+  }
+
+  // Calculate the integral image of the rectangle
+  for (int Y = 0; Y < height; Y++) {
+    for (int X = 0; X < width; X++) {
+      A = 0, B = 0, C = 0, D = 0, sum = 0;
+
+      if (X > 0 && Y > 0) {
+        A = integralImage[X - 1][Y - 1];
+      }
+      if (X > 0) {
+        B = integralImage[X - 1][Y + rectHeight];
+      }
+      if (Y > 0) {
+        C = integralImage[X + rectWidth][Y - 1];
+      }
+      D = integralImage[X + rectWidth][Y + rectHeight];
+
+      sum = A - B - C + D;
+      ImageSetPixel(img, X, Y, (uint8)((sum / area) + 0.5));
+      InstrCount[1] += 1;
+    }
+  }
+  
+  InstrPrint();
+
+  // Free allocated memory
+  for (int i = 0; i < nHeight; ++i) {
+    free(integralImage[i]);
+  }
+  free(integralImage);
+  integralImage = NULL;
+
 }
